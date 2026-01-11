@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.adocao_pet.Routes.Routes
-
 @Composable
 fun LoginScreen(navController: NavController) {
     var email by remember { mutableStateOf("") }
