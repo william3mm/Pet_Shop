@@ -6,10 +6,12 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.adocao_pet.Models.PetModel
+import com.example.adocao_pet.Models.UserModel
 
-@Database(entities = [PetModel::class], version = 1)
+@Database(entities = [PetModel::class, UserModel::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun petDao(): PetDao
+    abstract fun userDao(): UserDao
 
     companion object {
         @Volatile
@@ -21,7 +23,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "pet_database"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

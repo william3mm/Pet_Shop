@@ -1,26 +1,12 @@
 package com.example.adocao_pet.ui.theme.Layout
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.adocao_pet.Models.PetModel
@@ -34,7 +20,8 @@ fun AddEditPetScreen(
     viewModel: PetViewModel,
     petId: String? = null
 ) {
-    val existingPet = viewModel.availablePets.find { it.id == petId }
+    val availablePets by viewModel.availablePets.collectAsState()
+    val existingPet = availablePets.find { it.id == petId }
 
     var name by remember { mutableStateOf(existingPet?.name ?: "") }
     var breed by remember { mutableStateOf(existingPet?.breed ?: "") }
@@ -43,38 +30,89 @@ fun AddEditPetScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(if (petId == null) "Cadastrar Pet" else "Editar Pet") })
+            TopAppBar(
+                title = { Text(if (petId == null) "Cadastrar Pet" else "Editar Pet") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFFFF9800),
+                    titleContentColor = Color.White
+                )
+            )
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).padding(16.dp).verticalScroll(rememberScrollState())) {
-            OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nome") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = breed, onValueChange = { breed = it }, label = { Text("Raça") }, modifier = Modifier.fillMaxWidth())
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(16.dp)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Nome do Pet") },
+                modifier = Modifier.fillMaxWidth()
+            )
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = breed,
+                onValueChange = { breed = it },
+                label = { Text("Raça") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text("Categoria:", style = MaterialTheme.typography.labelLarge)
             Row(Modifier.padding(vertical = 8.dp)) {
-                FilterChip(selected = category == "Dog", onClick = { category = "Dog" }, label = { Text("Cão") })
+                FilterChip(
+                    selected = category == "Dog",
+                    onClick = { category = "Dog" },
+                    label = { Text("Cão") }
+                )
                 Spacer(Modifier.width(8.dp))
-                FilterChip(selected = category == "Cat", onClick = { category = "Cat" }, label = { Text("Gato") })
+                FilterChip(
+                    selected = category == "Cat",
+                    onClick = { category = "Cat" },
+                    label = { Text("Gato") }
+                )
             }
 
-            OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Descrição") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = description,
+                onValueChange = { description = it },
+                label = { Text("Descrição (história do pet)") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 4
+            )
 
             Button(
                 onClick = {
-                    val pet = PetModel(
-                        id = petId ?: UUID.randomUUID().toString(),
-                        name = name,
-                        breed = breed,
-                        category = category,
-                        age = "Recém-chegado",
-                        imageUrl = "https://images.unsplash.com/photo-1543466835-00a7907e9de1", // Imagem padrão
-                        description = description
-                    )
-                    if (petId == null) viewModel.adoptPet(pet) else viewModel.removePet(pet.id)
-                    navController.popBackStack()
+                    if (name.isNotBlank() && breed.isNotBlank()) {
+                        val pet = PetModel(
+                            id = petId ?: UUID.randomUUID().toString(),
+                            name = name,
+                            breed = breed,
+                            category = category,
+                            age = existingPet?.age ?: "Recém-chegado",
+                            imageUrl = existingPet?.imageUrl ?: "https://images.unsplash.com/photo-1543466835-00a7907e9de1",
+                            description = description,
+                            isAdopted = existingPet?.isAdopted ?: false
+                        )
+
+                        viewModel.adoptPet(pet)
+                        navController.popBackStack()
+                    }
                 },
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800))
             ) {
-                Text("Salvar Pet")
+                Text("Salvar no Banco de Dados", color = Color.White)
             }
         }
     }

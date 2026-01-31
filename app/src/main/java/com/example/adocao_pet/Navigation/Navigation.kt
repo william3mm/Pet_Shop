@@ -9,29 +9,39 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.adocao_pet.ViewModel.PetViewModel
 import com.example.adocao_pet.Routes.Routes
-import com.example.adocao_pet.ui.theme.Layout.AdoptedPetsScreen
-import com.example.adocao_pet.ui.theme.Layout.LoginScreen
-import com.example.adocao_pet.ui.theme.Layout.PetDetailScreen
-import com.example.adocao_pet.ui.theme.Layout.PetHomeScreen
+import com.example.adocao_pet.ViewModel.AuthViewModel
+import com.example.adocao_pet.ui.theme.Layout.* // Importa todas as telas do seu pacote
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
     val petViewModel: PetViewModel = viewModel()
+    val authViewModel: AuthViewModel = viewModel()
 
     NavHost(
         navController = navController,
-        startDestination = Routes.LOGIN
+        startDestination = Routes.SPLASH
     ) {
+        composable(Routes.SPLASH) {
+            SplashScreen(navController)
+        }
+
         composable(Routes.LOGIN) {
             LoginScreen(navController)
         }
+
+        composable(Routes.REGISTER) {
+            RegisterScreen(navController,authViewModel)
+        }
+
         composable(Routes.HOME) {
             PetHomeScreen(navController, petViewModel)
         }
+
         composable(Routes.ADOPTED) {
             AdoptedPetsScreen(navController, petViewModel)
         }
+
         composable(
             route = Routes.DETAILS,
             arguments = listOf(navArgument("petId") { type = NavType.StringType })

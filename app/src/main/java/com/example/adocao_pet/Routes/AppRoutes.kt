@@ -1,6 +1,9 @@
 package com.example.adocao_pet.Routes
 
+
 object Routes {
+    const val SPLASH = "splash"
+    const val REGISTER = "register"
     const val LOGIN = "login"
     const val HOME = "home"
     const val DETAILS = "details/{petId}"

@@ -12,6 +12,9 @@ interface PetDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPet(pet: PetModel)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(pets: List<PetModel>)
+
     @Delete
     suspend fun deletePet(pet: PetModel)
 

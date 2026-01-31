@@ -1,12 +1,16 @@
 package com.example.adocao_pet.ui.theme.Layout
 
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,17 +21,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import com.example.adocao_pet.Data.mockPets
 import com.example.adocao_pet.ViewModel.PetViewModel
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PetDetailScreen(petId: String, navController: NavController, viewModel: PetViewModel) {
-    val pet = (viewModel.availablePets + viewModel.adoptedPets).find { it.id == petId } ?: return
+    val availablePets by viewModel.availablePets.collectAsState()
+    val adoptedPets by viewModel.adoptedPets.collectAsState()
+
+    val pet = (availablePets + adoptedPets).find { it.id == petId }
+
+    if (pet == null) {
+        navController.popBackStack()
+        return
+    }
 
     Scaffold(
         topBar = {
@@ -40,22 +47,31 @@ fun PetDetailScreen(petId: String, navController: NavController, viewModel: PetV
                 },
                 actions = {
                     IconButton(onClick = {
-                        viewModel.removePet(pet.id)
+                        viewModel.removePet(pet) // Passando o objeto pet conforme o ViewModel do Room pede
                         navController.popBackStack()
                     }) {
                         Icon(Icons.Default.Delete, contentDescription = "Deletar", tint = Color.Red)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFFFF9800),
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
+                )
             )
         },
         bottomBar = {
-            if (viewModel.availablePets.contains(pet)) {
+            // Se o pet estiver na lista de disponíveis, mostramos o botão de adotar
+            if (availablePets.contains(pet)) {
                 Button(
                     onClick = {
                         viewModel.adoptPet(pet)
                         navController.popBackStack()
                     },
-                    modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .height(56.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800))
                 ) {
@@ -65,7 +81,10 @@ fun PetDetailScreen(petId: String, navController: NavController, viewModel: PetV
         }
     ) { padding ->
         Column(
-            modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
         ) {
             AsyncImage(
                 model = pet.imageUrl,
