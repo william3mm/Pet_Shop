@@ -9,5 +9,6 @@ data class PetModel(
     val age: String,
     val category: String,
     val imageUrl: String,
-    val description: String
+    val description: String,
+    val isAdopted: Boolean=false
 )
