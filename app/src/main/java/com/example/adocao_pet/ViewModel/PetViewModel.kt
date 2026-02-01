@@ -1,6 +1,7 @@
 package com.example.adocao_pet.ViewModel
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.adocao_pet.Database.AppDatabase
 import com.example.adocao_pet.Models.PetModel
 import com.example.adocao_pet.Network.RetrofitInstance
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -41,49 +43,59 @@ class PetViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun fetchPetsFromBackend() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val petsFromApi = RetrofitInstance.api.getPets()
-                // Uso do insertAll para eficiência
                 petDao.insertAll(petsFromApi)
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("API_FETCH", "Erro: ${e.message}")
             }
         }
     }
 
-
-    fun adoptPet(pet: PetModel) = viewModelScope.launch {
-        petDao.insertPet(pet.copy(isAdopted = true))
+    private suspend fun syncWithBackend(pet: PetModel) {
+        try {
+            val response = RetrofitInstance.api.updatePet(pet)
+            if (response.isSuccessful) {
+                Log.d("SYNC", "Sucesso: ${pet.name}")
+            }
+        } catch (e: Exception) {
+            Log.e("SYNC", "Falha: ${e.message}")
+        }
     }
 
-    fun cancelAdoption(pet: PetModel) = viewModelScope.launch {
-        petDao.insertPet(pet.copy(isAdopted = false))
+    fun adoptPet(pet: PetModel) = viewModelScope.launch(Dispatchers.IO) {
+        val updatedPet = pet.copy(isAdopted = true)
+        petDao.insertPet(updatedPet)
+        syncWithBackend(updatedPet)
     }
 
-    fun removePet(pet: PetModel) = viewModelScope.launch {
+    fun cancelAdoption(pet: PetModel) = viewModelScope.launch(Dispatchers.IO) {
+        val updatedPet = pet.copy(isAdopted = false)
+        petDao.insertPet(updatedPet)
+        syncWithBackend(updatedPet)
+    }
+
+    fun removePet(pet: PetModel) = viewModelScope.launch(Dispatchers.IO) {
         petDao.deletePet(pet)
+        try {
+            RetrofitInstance.api.deletePet(pet.id)
+        } catch (e: Exception) {
+            Log.e("SYNC", "Erro ao remover")
+        }
     }
 
-    fun savePet(pet: PetModel) = viewModelScope.launch {
+    fun savePet(pet: PetModel) = viewModelScope.launch(Dispatchers.IO) {
         petDao.insertPet(pet)
+        syncWithBackend(pet)
     }
 
-    fun updatePetName(petId: String, newName: String) = viewModelScope.launch {
+    fun updatePetName(petId: String, newName: String) = viewModelScope.launch(Dispatchers.IO) {
         val allPets = _availablePets.value + _adoptedPets.value
         allPets.find { it.id == petId }?.let { petEncontrado ->
             val petAtualizado = petEncontrado.copy(name = newName)
-
             petDao.insertPet(petAtualizado)
-
-            try {
-                val response = RetrofitInstance.api.updatePet(petAtualizado)
-                if (response.isSuccessful) {
-                    android.util.Log.d("SYNC", "Sucesso ao atualizar no servidor")
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("SYNC", "Falha ao enviar para o servidor: ${e.message}")
-            }
+            syncWithBackend(petAtualizado)
         }
     }
 }
