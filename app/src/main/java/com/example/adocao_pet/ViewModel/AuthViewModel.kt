@@ -17,28 +17,15 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     var name by mutableStateOf("")
     var email by mutableStateOf("")
     var password by mutableStateOf("")
-
     var errorMessage by mutableStateOf<String?>(null)
 
-    /**
-     * Lógica de Cadastro
-     */
     fun register(onSuccess: () -> Unit) {
         val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\$".toRegex()
 
         when {
-            name.isBlank() -> {
-                errorMessage = "Por favor, insira o seu nome."
-                return
-            }
-            !email.matches(emailRegex) -> {
-                errorMessage = "Formato de e-mail inválido."
-                return
-            }
-            password.length < 6 -> {
-                errorMessage = "A senha deve ter pelo menos 6 caracteres."
-                return
-            }
+            name.isBlank() -> { errorMessage = "Por favor, insira o seu nome."; return }
+            !email.matches(emailRegex) -> { errorMessage = "Formato de e-mail inválido."; return }
+            password.length < 6 -> { errorMessage = "A senha deve ter pelo menos 6 caracteres."; return }
         }
 
         viewModelScope.launch {
@@ -47,22 +34,15 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 if (existing != null) {
                     errorMessage = "Este e-mail já está cadastrado!"
                 } else {
-                    userDao.registerUser(
-                        UserModel(
-                            email = email,
-                            name = name,
-                            password = password
-                        )
-                    )
+                    userDao.registerUser(UserModel(email = email, name = name, password = password))
                     errorMessage = null
                     onSuccess()
                 }
             } catch (e: Exception) {
-                errorMessage = "Erro ao processar cadastro: ${e.message}"
+                errorMessage = "Erro ao processar cadastro local."
             }
         }
     }
-
 
     fun login(onSuccess: () -> Unit) {
         if (email.isBlank() || password.isBlank()) {
@@ -73,17 +53,16 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 val user = userDao.getUserByEmail(email)
-                if (user == null) {
-                    // Mensagem específica solicitada
-                    errorMessage = "Conta não encontrada."
-                } else if (user.password != password) {
-                    errorMessage = "Senha incorreta."
-                } else {
-                    errorMessage = null
-                    onSuccess()
+                when {
+                    user == null -> errorMessage = "Conta não encontrada."
+                    user.password != password -> errorMessage = "Senha incorreta."
+                    else -> {
+                        errorMessage = null
+                        onSuccess()
+                    }
                 }
             } catch (e: Exception) {
-                errorMessage = "Erro ao tentar fazer login."
+                errorMessage = "Erro ao acessar banco de dados local."
             }
         }
     }

@@ -10,7 +10,7 @@ import androidx.navigation.navArgument
 import com.example.adocao_pet.ViewModel.PetViewModel
 import com.example.adocao_pet.Routes.Routes
 import com.example.adocao_pet.ViewModel.AuthViewModel
-import com.example.adocao_pet.ui.theme.Layout.* // Importa todas as telas do seu pacote
+import com.example.adocao_pet.ui.theme.Layout.*
 
 @Composable
 fun AppNavigation() {
@@ -27,11 +27,17 @@ fun AppNavigation() {
         }
 
         composable(Routes.LOGIN) {
-            LoginScreen(navController)
+            LoginScreen(
+                navController = navController,
+                viewModel = authViewModel
+            )
         }
 
         composable(Routes.REGISTER) {
-            RegisterScreen(navController,authViewModel)
+            RegisterScreen(
+                navController = navController,
+                viewModel = authViewModel
+            )
         }
 
         composable(Routes.HOME) {

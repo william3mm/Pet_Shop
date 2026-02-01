@@ -59,6 +59,7 @@ dependencies {
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.compose.foundation)
     ksp(libs.androidx.room.compiler)
 
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
